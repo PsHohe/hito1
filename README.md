@@ -2,7 +2,7 @@
 
 Este proyecto es parte de los "Hitos" de DesafíoLatam. Esn este caso es una API construida con Node.js y Express. A continuación se detallan los pasos para ejecutar el proyecto y los endpoints disponibles.
 
-En este repositorio se encuentra un archivo PDF llamado 'evidencias.pdf' que incluye las imágenes solicitadas.
+En este repositorio se encuentra un archivo PDF llamado 'Evidencias-Hito1.pdf' que incluye las imágenes solicitadas.
 
 En este caso, decidí simular una base de datos con estudiante, ya que es cercano al área en la que trabajo.
 
