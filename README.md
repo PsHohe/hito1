@@ -10,7 +10,7 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
 
 1. Clonar el repositorio:
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
+   git clone https://github.com/PsHohe/hito1.git
    cd hito1
    ```
 
