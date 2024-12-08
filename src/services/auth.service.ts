@@ -3,12 +3,12 @@ import jwt from "jsonwebtoken";
 import userService from "./user.service";
 
 const loginWithEmailAndPassword = async (email: string, password: string) => {
-    const user = userService.getUserByEmail(email);
+    const user = await userService.getUserByEmail(email);
     if (!user) {
         throw new Error("User not found");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.hashedPassword);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         throw new Error("Invalid password");
     }

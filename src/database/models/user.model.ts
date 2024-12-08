@@ -1,31 +1,35 @@
-import { users } from '@/config/database';
+import pool from '@/config/database';
 import { User } from '@/interfaces/user.interface';
-import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 
-const getById = (id: string): User | undefined => {
-    return users.find(user => user.id === id);
-}
+const getById = async (id: string): Promise<User | undefined> => {
+    const query = 'SELECT * FROM users WHERE id = $1';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+};
 
-const getByEmail = (email: string): User | undefined => {
-    return users.find(user => user.email === email);
-}
+const getByEmail = async (email: string): Promise<User | undefined> => {
+    const query = 'SELECT * FROM users WHERE email = $1';
+    const result = await pool.query(query, [email]);
+    return result.rows[0];
+};
 
-const getAll = (): User[] => {
-    return users;
-}
+const getAll = async (): Promise<User[]> => {
+    const query = 'SELECT * FROM users';
+    const result = await pool.query(query);
+    return result.rows;
+};
 
-const create = (email: string, password: string) => {
-    const user: User = {
-        id: faker.string.uuid(),
-        email,
-        hashedPassword: bcrypt.hashSync(password, 10),
-    }
-
-    users.push(user);
-
-    return user;
-}
+const create = async (email: string, password: string): Promise<User> => {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const query = `
+        INSERT INTO users (email, password)
+        VALUES ($1, $2)
+        RETURNING *
+    `;
+    const result = await pool.query(query, [email, hashedPassword]);
+    return result.rows[0];
+};
 
 export default {
     getById,

@@ -1,7 +1,7 @@
-import { Student } from "@/interfaces/student.interface";
+import { IStudent } from "@/interfaces/student.interface";
 import { StudentFactory } from "@/database/factories/student.factory";
 
-export const seedStudents = (count: number): Student[] => {
+export const seedStudents = async (count: number): Promise<IStudent[]> => {
     return StudentFactory.createMany(count);
 };
 

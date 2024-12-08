@@ -1,23 +1,31 @@
-import { users } from '@/config/database';
 import { User } from '../../interfaces/user.interface';
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
+import pool from '@/config/database';
 
 export class UserFactory {
-    static create(overrides?: Partial<User>): User {
-        const user: User = {
-            id: faker.string.uuid(),
+    static async create(overrides?: Partial<User>): Promise<User> {
+        const password = faker.internet.password();
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user: Omit<User, 'id'> = {
             email: faker.internet.email(),
-            hashedPassword: bcrypt.hashSync(faker.internet.password(), 10),
+            password: hashedPassword,
             ...overrides,
         };
 
-        users.push(user);
+        const query = `
+            INSERT INTO users (email, password)
+            VALUES ($1, $2)
+            RETURNING *
+        `;
 
-        return user;
+        const result = await pool.query(query, [user.email, user.password]);
+        return result.rows[0];
     }
 
-    static createMany(count: number, overrides?: Partial<User>): User[] {
-        return Array.from({ length: count }, () => this.create(overrides));
+    static async createMany(count: number, overrides?: Partial<User>): Promise<User[]> {
+        const promises = Array.from({ length: count }, () => this.create(overrides));
+        return Promise.all(promises);
     }
 }

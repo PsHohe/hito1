@@ -1,12 +1,16 @@
 import seedStudents from "./student.seeder";
 import seedUsers from "./user.seeder";
 
-
-const seedDatabase = (): void => {
+const seedDatabase = async (): Promise<void> => {
     console.log('Seeding database...');
-    seedStudents(10);
-    seedUsers();
-    console.log('Database seeded successfully');
+    try {
+        await seedStudents(10);
+        await seedUsers();
+        console.log('Database seeded successfully');
+    } catch (error) {
+        console.error('Error seeding database:', error);
+        throw error;
+    }
 };
 
 export default seedDatabase;
