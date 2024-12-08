@@ -8,9 +8,9 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
 
 ## Instalación
 
-1. Clonar el repositorio:
+1. Clonar el repositorio (la rama hito2):
    ```bash
-   git clone https://github.com/PsHohe/hito1.git
+   git clone -b hito2 https://github.com/PsHohe/hito1.git
    cd hito1
    ```
 
