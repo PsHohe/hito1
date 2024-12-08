@@ -26,3 +26,11 @@ export const validateGetStudentById: Array<ValidationChain | ((req: Request, res
         next();
     }
 ];
+
+export const validateUpdateStudent: Array<ValidationChain | ((req: Request, res: Response, next: NextFunction) => void)> = [
+    ...validateCreateStudent,
+    (req: Request, res: Response, next: NextFunction) => {
+        req.body.id = req.params.id;
+        next();
+    }
+];

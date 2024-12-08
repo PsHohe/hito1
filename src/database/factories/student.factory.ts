@@ -1,27 +1,39 @@
-import { students } from '@/config/database';
-import { Student } from '../../interfaces/student.interface';
+import { IStudent } from '../../interfaces/student.interface';
 import { faker } from '@faker-js/faker';
-import { nanoid } from 'nanoid';
+import pool from '@/config/database';
 
 export class StudentFactory {
-    static create(overrides?: Partial<Student>): Student {
-        const student: Student = {
-            id: nanoid(),
+    static async create(overrides?: Partial<IStudent>): Promise<IStudent> {
+        const student: Omit<IStudent, 'id'> = {
             name: faker.person.firstName(),
             lastName1: faker.person.lastName(),
             lastName2: faker.person.lastName(),
-            dateOfBirth: faker.date.birthdate({ min: 6, max: 12, mode: 'age' }).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'),
+            dateOfBirth: faker.date.birthdate({ min: 6, max: 12, mode: 'age' }),
             gender: faker.person.sex(),
             ...overrides,
         };
 
-        students.push(student);
+        const query = `
+            INSERT INTO students (name, lastName1, lastName2, dateOfBirth, gender)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `;
 
-        return student;
+        const values = [
+            student.name,
+            student.lastName1,
+            student.lastName2,
+            student.dateOfBirth,
+            student.gender
+        ];
+
+        const result = await pool.query(query, values);
+        return result.rows[0];
     }
 
-    static createMany(count: number, overrides?: Partial<Student>): Student[] {
-        return Array.from({ length: count }, () => this.create(overrides));
+    static async createMany(count: number, overrides?: Partial<IStudent>): Promise<IStudent[]> {
+        const promises = Array.from({ length: count }, () => this.create(overrides));
+        return Promise.all(promises);
     }
 }
 
