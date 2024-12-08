@@ -10,7 +10,7 @@ const getStudents = async (req: Request, res: Response) => {
             const studentObj = Student.fromJson(student);
             return {
                 ...studentObj,
-                age: studentObj.age
+                dateOfBirth: format(new Date(studentObj.dateOfBirth), 'dd-MM-yyyy')
             };
         }));
     } catch (error) {
@@ -29,7 +29,7 @@ const createStudent = async (req: Request, res: Response) => {
         const student = Student.fromJson(studentRaw);
         res.status(201).json({
             ...student,
-            age: student.age
+            dateOfBirth: format(new Date(student.dateOfBirth), 'dd-MM-yyyy')
         });
     } catch (error) {
         console.log(error);
@@ -65,7 +65,7 @@ const updateStudent = async (req: Request, res: Response) => {
         const student = Student.fromJson({...studentRaw, id: req.params.id});
         res.status(200).json({
             ...student,
-            age: student.age
+            dateOfBirth: format(new Date(student.dateOfBirth), 'dd-MM-yyyy')
         });
     } catch (error) {
         console.log(error);
