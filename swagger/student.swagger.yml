@@ -214,9 +214,6 @@ components:
         gender:
           type: string
           example: "Male"
-        age:
-          type: integer
-          example: 13
 
     Error:
       type: object

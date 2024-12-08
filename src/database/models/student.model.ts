@@ -48,10 +48,12 @@ const deleteById = async (id: string): Promise<void> => {
     await pool.query(query, [id]);
 };
 
-export default {
+const StudentModel = {
     getById,
     getAll,
     create,
     updateById,
     deleteById
 };
+
+export default StudentModel;

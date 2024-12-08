@@ -13,9 +13,9 @@ CREATE TABLE users (
 CREATE TABLE students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
     name VARCHAR(100) NOT NULL,
-    lastName1 VARCHAR(100) NOT NULL,
-    lastName2 VARCHAR(100) NOT NULL,
-    dateOfBirth DATE NOT NULL,
+    lastname1 VARCHAR(100) NOT NULL,
+    lastname2 VARCHAR(100) NOT NULL,
+    dateofbirth DATE NOT NULL,
     gender VARCHAR(50) NOT NULL
 );
 

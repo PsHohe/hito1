@@ -11,7 +11,8 @@
     "dev": "tsx watch src/index.ts",
     "db:migrate": "tsx src/database/migrations/runMigrations.ts",
     "db:seed": "tsx src/database/seeders/runSeeders.ts",
-    "db:up": "docker compose up --d"
+    "db:up": "docker compose up --d",
+    "test": "vitest --config vite.config.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -22,8 +23,10 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.7",
     "pkgroll": "^2.5.1",
+    "supertest": "^7.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",

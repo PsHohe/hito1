@@ -1,8 +1,16 @@
 # Node modules
-node_modules
+node_modules/
 
 # Postgres data
 postgres-data
 
 # DS_Store
 .DS_Store
+
+# lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# dist
+dist/

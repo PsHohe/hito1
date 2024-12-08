@@ -1,8 +1,7 @@
 # Proyecto Hitos Desafío latam
+## Hito 3
 
 Este proyecto es parte de los "Hitos" de DesafíoLatam. Esn este caso es una API construida con Node.js y Express. A continuación se detallan los pasos para ejecutar el proyecto y los endpoints disponibles.
-
-En este repositorio se encuentra un archivo PDF llamado 'Evidencias-Hito1.pdf' que incluye las imágenes solicitadas.
 
 En este caso, decidí simular una base de datos con estudiante, ya que es cercano al área en la que trabajo.
 
@@ -24,7 +23,7 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
    npm run build
    ```
 
-4. Levantar la base de datos con Docker (opcional, también puedes asignar una nueva DATABASE_URL en el archivo .env):
+4. Levantar la base de datos con Docker (opcional, también puedes asignar una nueva DATABASE_URL en el archivo .env). Se requiere tener Docker instalado:
    ```bash
    docker compose up --d
    ```
@@ -47,6 +46,11 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
 El servidor se ejecutará en `http://localhost:3000`.
 
 8. (Opcional) Acceder a la documentación Swagger en: `http://localhost:3000/api-docs`
+
+9. Correr los tests:
+   ```bash
+   npm run test
+   ```
 
 ## Endpoints
 
