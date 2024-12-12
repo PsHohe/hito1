@@ -23,7 +23,7 @@ const createStudent = async (req: Request, res: Response) => {
     try {
         const studentData = {
             ...req.body,
-            dateOfBirth: new Date(req.body.dateOfBirth)
+            dateOfBirth: parse(req.body.dateOfBirth, 'dd-MM-yyyy', new Date())
         };
         const studentRaw = await studentService.createStudent(studentData);
         const student = Student.fromJson(studentRaw);
@@ -59,7 +59,7 @@ const updateStudent = async (req: Request, res: Response) => {
     try {
         const studentData = {
             ...req.body,
-            dateOfBirth: new Date(req.body.dateOfBirth)
+            dateOfBirth: parse(req.body.dateOfBirth, 'dd-MM-yyyy', new Date())
         };
         const studentRaw = await studentService.updateStudent(req.params.id, studentData);
         const student = Student.fromJson({...studentRaw, id: req.params.id});
