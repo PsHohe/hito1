@@ -35,9 +35,9 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
 
 El servidor se ejecutará en `http://localhost:3000`.
 
-8. (Opcional) Acceder a la documentación Swagger en: `http://localhost:3000/api-docs`
+6. (Opcional) Acceder a la documentación Swagger en: `http://localhost:3000/api-docs`
 
-9. Correr los tests:
+7. Correr los tests:
    ```bash
    npm run test
    ```
