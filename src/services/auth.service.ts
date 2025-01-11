@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userService from "./user.service";
 
@@ -8,7 +7,8 @@ const loginWithEmailAndPassword = async (email: string, password: string) => {
         throw new Error("User not found");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.comparePassword(password);
+    
     if (!isPasswordValid) {
         throw new Error("Invalid password");
     }

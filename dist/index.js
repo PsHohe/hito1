@@ -1,84 +1,113 @@
 import dotenv from 'dotenv';
 import express, { Router } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import 'dotenv/config';
-import pg from 'pg';
-import { differenceInYears, format } from 'date-fns';
+import { Column, DataType, Table, Model, Sequelize } from 'sequelize-typescript';
+import bcrypt from 'bcryptjs';
+import { differenceInYears } from 'date-fns';
 import { body, validationResult, param } from 'express-validator';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import rateLimit from 'express-rate-limit';
+import 'dotenv/config';
+import { faker } from '@faker-js/faker';
 
-const { Pool } = pg;
-console.log(process.env.DATABASE_URL, "connection string");
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
-});
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error("Error acquiring client", err.stack);
+var __defProp$1 = Object.defineProperty;
+var __getOwnPropDesc$1 = Object.getOwnPropertyDescriptor;
+var __decorateClass$1 = (decorators, target, key, kind) => {
+  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$1(target, key) : target;
+  for (var i = decorators.length - 1, decorator; i >= 0; i--)
+    if (decorator = decorators[i])
+      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
+  if (kind && result) __defProp$1(target, key, result);
+  return result;
+};
+let User = class extends Model {
+  static async hashPassword(password) {
+    return bcrypt.hash(password, 10);
   }
-  if (!client) {
-    return console.error("Client is undefined");
-  }
-  client.query("SELECT NOW()", (err2, result) => {
-    release();
-    if (err2) {
-      return console.error("Error executing query", err2.stack);
+  async comparePassword(candidatePassword) {
+    try {
+      if (!this.password || !candidatePassword) {
+        return false;
+      }
+      const isMatch = await bcrypt.compare(candidatePassword, this.password);
+      return isMatch;
+    } catch (error) {
+      return false;
     }
-    console.log("Connected to PostgreSQL Database");
+  }
+  toJSON() {
+    const values = super.toJSON();
+    delete values.password;
+    return values;
+  }
+};
+__decorateClass$1([
+  Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    primaryKey: true
+  })
+], User.prototype, "id", 2);
+__decorateClass$1([
+  Column({
+    type: DataType.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  })
+], User.prototype, "email", 2);
+__decorateClass$1([
+  Column({
+    type: DataType.TEXT,
+    allowNull: false
+  })
+], User.prototype, "password", 2);
+User = __decorateClass$1([
+  Table({
+    tableName: "users",
+    timestamps: false
+  })
+], User);
+
+const getAllUsers = async () => {
+  const users = await User.findAll({
+    attributes: { exclude: ["password"] }
   });
-});
-
-const getById$1 = async (id) => {
-  const query = "SELECT * FROM users WHERE id = $1";
-  const result = await pool.query(query, [id]);
-  return result.rows[0];
-};
-const getByEmail = async (email) => {
-  const query = "SELECT * FROM users WHERE email = $1";
-  const result = await pool.query(query, [email]);
-  return result.rows[0];
-};
-const getAll$1 = async () => {
-  const query = "SELECT * FROM users";
-  const result = await pool.query(query);
-  return result.rows;
-};
-const create$1 = async (email, password) => {
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const query = `
-        INSERT INTO users (email, password)
-        VALUES ($1, $2)
-        RETURNING *
-    `;
-  const result = await pool.query(query, [email, hashedPassword]);
-  return result.rows[0];
-};
-var UserModel = {
-  getById: getById$1,
-  getByEmail,
-  getAll: getAll$1,
-  create: create$1
-};
-
-const getAllUsers = () => {
-  const users = UserModel.getAll();
   return users;
 };
-const getUserByEmail = (email) => {
-  const user = UserModel.getByEmail(email);
+const getUserByEmail = async (email) => {
+  const user = await User.findOne({
+    where: { email },
+    rejectOnEmpty: false
+  });
   return user;
 };
-const createUserWithEmailAndPassword = (email, password) => {
-  const user = UserModel.create(email, password);
+const getUserById = async (id) => {
+  const user = await User.findByPk(id, {
+    attributes: { exclude: ["password"] }
+  });
   return user;
+};
+const createUserWithEmailAndPassword = async (email, password) => {
+  try {
+    const hashedPassword = await User.hashPassword(password);
+    const user = await User.create({
+      email,
+      password: hashedPassword
+    });
+    return user.toJSON();
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
 };
 var userService = {
   getAllUsers,
   getUserByEmail,
+  getUserById,
   createUserWithEmailAndPassword
 };
 
@@ -87,7 +116,7 @@ const loginWithEmailAndPassword = async (email, password) => {
   if (!user) {
     throw new Error("User not found");
   }
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
     throw new Error("Invalid password");
   }
@@ -152,74 +181,106 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-const getById = async (id) => {
-  const query = "SELECT * FROM students WHERE id = $1";
-  const result = await pool.query(query, [id]);
-  return result.rows[0];
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __decorateClass = (decorators, target, key, kind) => {
+  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc(target, key) : target;
+  for (var i = decorators.length - 1, decorator; i >= 0; i--)
+    if (decorator = decorators[i])
+      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
+  if (kind && result) __defProp(target, key, result);
+  return result;
 };
-const getAll = async () => {
-  const query = "SELECT * FROM students";
-  const result = await pool.query(query);
-  return result.rows;
+let Student = class extends Model {
+  get age() {
+    if (!this.dateOfBirth) return null;
+    return differenceInYears(/* @__PURE__ */ new Date(), this.dateOfBirth);
+  }
+  toJSON() {
+    const values = super.toJSON();
+    return {
+      ...values,
+      age: this.age
+    };
+  }
 };
-const create = async (student) => {
-  const query = `
-        INSERT INTO students (name, lastName1, lastName2, dateOfBirth, gender)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-    `;
-  const values = [
-    student.name,
-    student.lastName1,
-    student.lastName2,
-    student.dateOfBirth,
-    student.gender
-  ];
-  const result = await pool.query(query, values);
-  return result.rows[0];
-};
-const updateById = async (id, student) => {
-  const query = `
-        UPDATE students 
-        SET name = $1, lastName1 = $2, lastName2 = $3, dateOfBirth = $4, gender = $5 
-        WHERE id = $6
-        RETURNING *
-    `;
-  const values = [student.name, student.lastName1, student.lastName2, student.dateOfBirth, student.gender, id];
-  const result = await pool.query(query, values);
-  return result.rows[0];
-};
-const deleteById = async (id) => {
-  const query = "DELETE FROM students WHERE id = $1";
-  await pool.query(query, [id]);
-};
-const StudentModel = {
-  getById,
-  getAll,
-  create,
-  updateById,
-  deleteById
-};
+__decorateClass([
+  Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    primaryKey: true
+  })
+], Student.prototype, "id", 2);
+__decorateClass([
+  Column({
+    type: DataType.STRING,
+    allowNull: false
+  })
+], Student.prototype, "name", 2);
+__decorateClass([
+  Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: "lastName1"
+  })
+], Student.prototype, "lastName1", 2);
+__decorateClass([
+  Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: "lastName2"
+  })
+], Student.prototype, "lastName2", 2);
+__decorateClass([
+  Column({
+    type: DataType.DATEONLY,
+    allowNull: false,
+    field: "dateOfBirth",
+    get() {
+      const value = this.getDataValue("dateOfBirth");
+      return value ? new Date(value) : null;
+    }
+  })
+], Student.prototype, "dateOfBirth", 2);
+__decorateClass([
+  Column({
+    type: DataType.STRING,
+    allowNull: false
+  })
+], Student.prototype, "gender", 2);
+Student = __decorateClass([
+  Table({
+    tableName: "students",
+    timestamps: false
+  })
+], Student);
 
-const getAllStudents = () => {
-  const students = StudentModel.getAll();
+const getAllStudents = async () => {
+  const students = await Student.findAll();
   return students;
 };
-const getStudentById$1 = (id) => {
-  const student = StudentModel.getById(id);
+const getStudentById$1 = async (id) => {
+  const student = await Student.findByPk(id);
   return student;
 };
-const createStudent$1 = (student) => {
-  const newStudent = StudentModel.create(student);
-  return newStudent;
+const createStudent$1 = async (studentData) => {
+  const student = await Student.create(studentData);
+  return student;
 };
-const updateStudent$1 = (id, student) => {
-  const updatedStudent = StudentModel.updateById(id, student);
+const updateStudent$1 = async (id, studentData) => {
+  const student = await Student.findByPk(id);
+  if (!student) {
+    throw new Error("Student not found");
+  }
+  const updatedStudent = await student.update(studentData);
   return updatedStudent;
 };
 const deleteStudent$1 = async (id) => {
-  const deleted = await StudentModel.deleteById(id);
-  return deleted;
+  const student = await Student.findByPk(id);
+  if (!student) {
+    throw new Error("Student not found");
+  }
+  await student.destroy();
 };
 var studentService = {
   getAllStudents,
@@ -229,56 +290,35 @@ var studentService = {
   deleteStudent: deleteStudent$1
 };
 
-class Student {
-  id;
-  name;
-  lastName1;
-  lastName2;
-  dateOfBirth;
-  gender;
-  constructor(data) {
-    if (data.id) this.id = data.id;
-    this.name = data.name;
-    this.lastName1 = data.lastName1;
-    this.lastName2 = data.lastName2;
-    this.dateOfBirth = data.dateOfBirth;
-    this.gender = data.gender;
+const formatDate = (date) => {
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      throw new Error("Invalid date");
+    }
+    const offset = dateObj.getTimezoneOffset();
+    const adjustedDate = new Date(dateObj.getTime() - offset * 60 * 1e3);
+    return adjustedDate.toISOString().split("T")[0].split("-").reverse().join("-");
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Invalid date";
   }
-  static fromJson(json) {
-    return new Student({
-      id: json.id,
-      name: json.name,
-      lastName1: json.lastname1,
-      lastName2: json.lastname2,
-      dateOfBirth: new Date(json.dateofbirth),
-      gender: json.gender
-    });
-  }
-  get age() {
-    return differenceInYears(/* @__PURE__ */ new Date(), this.dateOfBirth);
-  }
-  toJSON() {
-    return {
-      id: this.id,
-      name: this.name,
-      lastName1: this.lastName1,
-      lastName2: this.lastName2,
-      dateOfBirth: this.dateOfBirth,
-      gender: this.gender
-    };
-  }
-}
-
+};
+const parseDate = (dateStr) => {
+  const [day, month, year] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+const validateUUID = (id) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
 const getStudents = async (req, res) => {
   try {
     const students = await studentService.getAllStudents();
-    res.json(students.map((student) => {
-      const studentObj = Student.fromJson(student);
-      return {
-        ...studentObj,
-        dateOfBirth: format(new Date(studentObj.dateOfBirth), "dd-MM-yyyy")
-      };
-    }));
+    res.json(students.map((student) => ({
+      ...student.toJSON(),
+      dateOfBirth: formatDate(student.dateOfBirth)
+    })));
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -286,15 +326,15 @@ const getStudents = async (req, res) => {
 };
 const createStudent = async (req, res) => {
   try {
+    const dateOfBirth = parseDate(req.body.dateOfBirth);
     const studentData = {
       ...req.body,
-      dateOfBirth: new Date(req.body.dateOfBirth)
+      dateOfBirth
     };
-    const studentRaw = await studentService.createStudent(studentData);
-    const student = Student.fromJson(studentRaw);
+    const student = await studentService.createStudent(studentData);
     res.status(201).json({
-      ...student,
-      dateOfBirth: format(new Date(student.dateOfBirth), "dd-MM-yyyy")
+      ...student.toJSON(),
+      dateOfBirth: formatDate(student.dateOfBirth)
     });
   } catch (error) {
     console.log(error);
@@ -303,15 +343,19 @@ const createStudent = async (req, res) => {
 };
 const getStudentById = async (req, res) => {
   try {
-    const studentRaw = await studentService.getStudentById(req.params.id);
-    if (!studentRaw) {
+    const { id } = req.params;
+    if (!validateUUID(id)) {
+      res.status(400).json({ error: "Invalid student ID format" });
+      return;
+    }
+    const student = await studentService.getStudentById(id);
+    if (!student) {
       res.status(404).json({ error: "Student not found" });
       return;
     }
-    const student = Student.fromJson(studentRaw);
     res.json({
-      ...student,
-      dateOfBirth: format(new Date(student.dateOfBirth), "dd-MM-yyyy")
+      ...student.toJSON(),
+      dateOfBirth: formatDate(student.dateOfBirth)
     });
   } catch (error) {
     console.log(error);
@@ -320,26 +364,44 @@ const getStudentById = async (req, res) => {
 };
 const updateStudent = async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!validateUUID(id)) {
+      res.status(400).json({ error: "Invalid student ID format" });
+      return;
+    }
+    const dateOfBirth = parseDate(req.body.dateOfBirth);
     const studentData = {
       ...req.body,
-      dateOfBirth: new Date(req.body.dateOfBirth)
+      dateOfBirth
     };
-    const studentRaw = await studentService.updateStudent(req.params.id, studentData);
-    const student = Student.fromJson({ ...studentRaw, id: req.params.id });
-    res.status(200).json({
-      ...student,
-      dateOfBirth: format(new Date(student.dateOfBirth), "dd-MM-yyyy")
+    const student = await studentService.updateStudent(id, studentData);
+    res.json({
+      ...student.toJSON(),
+      dateOfBirth: formatDate(student.dateOfBirth)
     });
   } catch (error) {
+    if (error?.message === "Student not found") {
+      res.status(404).json({ error: "Student not found" });
+      return;
+    }
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 const deleteStudent = async (req, res) => {
   try {
-    await studentService.deleteStudent(req.params.id);
+    const { id } = req.params;
+    if (!validateUUID(id)) {
+      res.status(400).json({ error: "Invalid student ID format" });
+      return;
+    }
+    await studentService.deleteStudent(id);
     res.status(204).send();
   } catch (error) {
+    if (error?.message === "Student not found") {
+      res.status(404).json({ error: "Student not found" });
+      return;
+    }
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -424,6 +486,101 @@ app.use(limiter);
 app.use("/api/v1/auth", router$1);
 app.use("/api/v1/students", router);
 
+const sequelize = new Sequelize(process.env.DATABASE_URL || "", {
+  dialect: "postgres",
+  dialectOptions: {
+    ssl: process.env.NODE_ENV === "production" ? {
+      require: true,
+      rejectUnauthorized: false
+    } : false
+  },
+  logging: false
+});
+const initDatabase = async () => {
+  try {
+    sequelize.addModels([Student, User]);
+    await sequelize.authenticate();
+    console.log("Connected to PostgreSQL Database");
+    await sequelize.sync({ force: true });
+    console.log("Database synchronized - All tables have been recreated");
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+    throw error;
+  }
+};
+
+class StudentFactory {
+  static async create(overrides) {
+    const studentData = {
+      name: faker.person.firstName(),
+      lastName1: faker.person.lastName(),
+      lastName2: faker.person.lastName(),
+      dateOfBirth: faker.date.birthdate({ min: 6, max: 12, mode: "age" }),
+      gender: faker.person.sex(),
+      ...overrides
+    };
+    const student = await Student.create(studentData);
+    return student.toJSON();
+  }
+  static async createMany(count, overrides) {
+    const promises = Array.from({ length: count }, () => this.create(overrides));
+    return Promise.all(promises);
+  }
+}
+
+const seedStudents = async (count) => {
+  return StudentFactory.createMany(count);
+};
+
+class UserFactory {
+  static async create(overrides) {
+    const password = faker.internet.password();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userData = {
+      email: faker.internet.email(),
+      password: hashedPassword,
+      ...overrides
+    };
+    const user = await User.create(userData);
+    return user.toJSON();
+  }
+  static async createMany(count, overrides) {
+    const promises = Array.from({ length: count }, () => this.create(overrides));
+    return Promise.all(promises);
+  }
+}
+
+const seedUsers = async () => {
+  console.log("Creating user with email: user@email.com and password: password");
+  return UserFactory.create({
+    email: "user@email.com",
+    password: bcrypt.hashSync("password", 10)
+  });
+};
+
+const seedDatabase = async () => {
+  console.log("Seeding database...");
+  try {
+    await seedStudents(10);
+    await seedUsers();
+    console.log("Database seeded successfully");
+  } catch (error) {
+    console.error("Error seeding database:", error);
+    throw error;
+  }
+};
+
+async function runSeeders() {
+  try {
+    console.log("Running seeders...");
+    await seedDatabase();
+    console.log("Seeders completed successfully");
+  } catch (error) {
+    console.error("Error running seeders:", error);
+    throw error;
+  }
+}
+
 dotenv.config();
 const port = process.env.PORT || 3e3;
 const startServer = async () => {
@@ -432,6 +589,13 @@ const startServer = async () => {
 **************************************************
 Initial Setup
 **************************************************`);
+    await initDatabase();
+    console.log("Database initialized successfully");
+    try {
+      await runSeeders();
+    } catch (error) {
+      console.error("Failed to run seeders:", error);
+    }
     app.listen(port, () => {
       console.log(`
 **************************************************

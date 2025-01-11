@@ -1,29 +1,34 @@
+import { Sequelize } from 'sequelize-typescript';
 import "dotenv/config";
-import pg from "pg";
+import { Student } from '@/database/models/student.model';
+import { User } from '@/database/models/user.model';
 
-const { Pool } = pg;
-
-console.log(process.env.DATABASE_URL, 'connection string');
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+const sequelize = new Sequelize(process.env.DATABASE_URL || '', {
+    dialect: 'postgres',
+    dialectOptions: {
+        ssl: process.env.NODE_ENV === 'production' 
+            ? {
+                require: true,
+                rejectUnauthorized: false
+              }
+            : false
+    },
+    logging: false
 });
 
-pool.connect((err, client, release) => {
-    if (err) {
-        return console.error('Error acquiring client', err.stack);
-    }
-    if (!client) {
-        return console.error('Client is undefined');
-    }
-    client.query('SELECT NOW()', (err, result) => {
-        release();
-        if (err) {
-            return console.error('Error executing query', err.stack);
-        }
+export const initDatabase = async () => {
+    try {
+        sequelize.addModels([Student, User]);
+        await sequelize.authenticate();
         console.log('Connected to PostgreSQL Database');
-    });
-});
+        
+        // Drop and recreate all tables
+        await sequelize.sync({ force: true });
+        console.log('Database synchronized - All tables have been recreated');
+    } catch (error) {
+        console.error('Error connecting to the database:', error);
+        throw error;
+    }
+};
 
-export default pool;
+export default sequelize;

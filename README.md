@@ -28,17 +28,7 @@ En este caso, decidí simular una base de datos con estudiante, ya que es cercan
    docker compose up --d
    ```
 
-5. Realizar la migración de las tablas (esto creará las tablas necesarias):
-   ```bash
-   npm run db:migrate
-   ```
-
-6. Poblar la base de datos con datos de prueba (opcional, pero creará datos para poder testear fácilmente, además de un usuario de ejemplo):
-   ```bash
-   npm run db:seed
-   ```
-
-7. Iniciar el servidor:
+5. Iniciar el servidor:
    ```bash
    npm start
    ```
@@ -126,15 +116,13 @@ Authorization: Bearer <tu_token>
 - `npm start`: Inicia el servidor
 - `npm run build`: Compila el proyecto
 - `npm run dev`: Inicia el servidor en modo desarrollo
-- `npm run db:migrate`: Ejecuta las migraciones
-- `npm run db:seed`: Puebla la base de datos
 - `npm run db:up`: Levanta el contenedor Docker de PostgreSQL
 
 
 ## Notas
 
 - *IMPORTANTE* Este proyecto cuenta con documentación Swagger, disponible en: /api-docs/ con la que se puede fácilmente probar los endpoints.
-- La base de datos persiste mediante Docker postgres.
+- La base de datos está siendo reiniciada a cada inicio. En este momento, además, se crean algunos estudiantes y un usuario por defecto en un seeder automático.
 - Se incluye un usuario por defecto: email 'user@email.com' y contraseña 'password'
 - El archivo .env está incluido en el repositorio para facilitar la prueba
 - La API incluye rate limiting de 100 peticiones por IP cada 5 minutos

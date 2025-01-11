@@ -1,59 +1,67 @@
-import pool from '@/config/database';
-import { IStudent } from '@/interfaces/student.interface';
+import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import { differenceInYears } from 'date-fns';
 
-const getById = async (id: string): Promise<IStudent | undefined> => {
-    const query = 'SELECT * FROM students WHERE id = $1';
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
-};
+@Table({
+    tableName: 'students',
+    timestamps: false
+})
+export class Student extends Model {
+    @Column({
+        type: DataType.UUID,
+        defaultValue: DataType.UUIDV4,
+        primaryKey: true
+    })
+    declare id: string;
 
-const getAll = async (): Promise<IStudent[]> => {
-    const query = 'SELECT * FROM students';
-    const result = await pool.query(query);
-    return result.rows;
-};
+    @Column({
+        type: DataType.STRING,
+        allowNull: false
+    })
+    declare name: string;
 
-const create = async (student: Omit<IStudent, 'id'>): Promise<IStudent> => {
-    const query = `
-        INSERT INTO students (name, lastName1, lastName2, dateOfBirth, gender)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-    `;
-    const values = [
-        student.name,
-        student.lastName1,
-        student.lastName2,
-        student.dateOfBirth,
-        student.gender
-    ];
-    
-    const result = await pool.query(query, values);
-    return result.rows[0];
-};
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'lastName1'
+    })
+    declare lastName1: string;
 
-const updateById = async (id: string, student: IStudent): Promise<IStudent> => {
-    const query = `
-        UPDATE students 
-        SET name = $1, lastName1 = $2, lastName2 = $3, dateOfBirth = $4, gender = $5 
-        WHERE id = $6
-        RETURNING *
-    `;
-    const values = [student.name, student.lastName1, student.lastName2, student.dateOfBirth, student.gender, id];
-    const result = await pool.query(query, values);
-    return result.rows[0];
-};
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'lastName2'
+    })
+    declare lastName2: string;
 
-const deleteById = async (id: string): Promise<void> => {
-    const query = 'DELETE FROM students WHERE id = $1';
-    await pool.query(query, [id]);
-};
+    @Column({
+        type: DataType.DATEONLY,
+        allowNull: false,
+        field: 'dateOfBirth',
+        get() {
+            const value = this.getDataValue('dateOfBirth');
+            return value ? new Date(value) : null;
+        }
+    })
+    declare dateOfBirth: Date;
 
-const StudentModel = {
-    getById,
-    getAll,
-    create,
-    updateById,
-    deleteById
-};
+    @Column({
+        type: DataType.STRING,
+        allowNull: false
+    })
+    declare gender: string;
 
-export default StudentModel;
+    get age(): number | null {
+        if (!this.dateOfBirth) return null;
+        return differenceInYears(new Date(), this.dateOfBirth);
+    }
+
+    toJSON() {
+        const values = super.toJSON();
+        return {
+            ...values,
+            age: this.age
+        };
+    }
+}
+
+export default Student;

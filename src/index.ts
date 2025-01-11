@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
 import app from './app';
+import { initDatabase } from './config/database';
+import { runSeeders } from './database/seeders/runSeeders';
 
 dotenv.config();
 
@@ -12,7 +14,9 @@ const startServer = async () => {
 Initial Setup
 **************************************************`);
 
-        // Start server
+        await initDatabase();
+        await runSeeders();
+
         app.listen(port, () => {
             console.log(`
 **************************************************
