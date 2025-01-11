@@ -1,39 +1,55 @@
-import pool from '@/config/database';
-import { User } from '@/interfaces/user.interface';
+import { Table, Column, Model, DataType } from 'sequelize-typescript';
 import bcrypt from 'bcryptjs';
 
-const getById = async (id: string): Promise<User | undefined> => {
-    const query = 'SELECT * FROM users WHERE id = $1';
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
-};
+@Table({
+    tableName: 'users',
+    timestamps: false
+})
+export class User extends Model {
+    @Column({
+        type: DataType.UUID,
+        defaultValue: DataType.UUIDV4,
+        primaryKey: true
+    })
+    declare id: string;
 
-const getByEmail = async (email: string): Promise<User | undefined> => {
-    const query = 'SELECT * FROM users WHERE email = $1';
-    const result = await pool.query(query, [email]);
-    return result.rows[0];
-};
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true
+        }
+    })
+    declare email: string;
 
-const getAll = async (): Promise<User[]> => {
-    const query = 'SELECT * FROM users';
-    const result = await pool.query(query);
-    return result.rows;
-};
+    @Column({
+        type: DataType.TEXT,
+        allowNull: false
+    })
+    declare password: string;
 
-const create = async (email: string, password: string): Promise<User> => {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const query = `
-        INSERT INTO users (email, password)
-        VALUES ($1, $2)
-        RETURNING *
-    `;
-    const result = await pool.query(query, [email, hashedPassword]);
-    return result.rows[0];
-};
+    static async hashPassword(password: string): Promise<string> {
+        return bcrypt.hash(password, 10);
+    }
 
-export default {
-    getById,
-    getByEmail,
-    getAll,
-    create,
-};
+    async comparePassword(candidatePassword: string): Promise<boolean> {
+        try {
+            if (!this.password || !candidatePassword) {
+                return false;
+            }
+            const isMatch = await bcrypt.compare(candidatePassword, this.password);
+            return isMatch;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    toJSON() {
+        const values = super.toJSON();
+        delete values.password;
+        return values;
+    }
+}
+
+export default User;

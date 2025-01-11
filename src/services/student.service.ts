@@ -1,29 +1,36 @@
-import StudentModel from "@/database/models/student.model";
+import { Student } from "@/database/models/student.model";
 import { IStudent } from "@/interfaces/student.interface";
 
-const getAllStudents = () => {
-    const students = StudentModel.getAll();
+const getAllStudents = async () => {
+    const students = await Student.findAll();
     return students;
 };
 
-const getStudentById = (id: string) => {
-    const student = StudentModel.getById(id);
+const getStudentById = async (id: string) => {
+    const student = await Student.findByPk(id);
     return student;
 };
 
-const createStudent = (student: IStudent) => {
-    const newStudent = StudentModel.create(student);
-    return newStudent;
+const createStudent = async (studentData: Omit<IStudent, 'id'>) => {
+    const student = await Student.create(studentData);
+    return student;
 };
 
-const updateStudent = (id: string, student: IStudent) => {
-    const updatedStudent = StudentModel.updateById(id, student);
+const updateStudent = async (id: string, studentData: Partial<IStudent>) => {
+    const student = await Student.findByPk(id);
+    if (!student) {
+        throw new Error('Student not found');
+    }
+    const updatedStudent = await student.update(studentData);
     return updatedStudent;
 };
 
 const deleteStudent = async (id: string) => {
-    const deleted = await StudentModel.deleteById(id);
-    return deleted;
+    const student = await Student.findByPk(id);
+    if (!student) {
+        throw new Error('Student not found');
+    }
+    await student.destroy();
 };
 
 export default {
