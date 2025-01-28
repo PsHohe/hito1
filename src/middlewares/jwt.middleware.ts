@@ -16,14 +16,12 @@ export const verifyToken = async (
     res: Response,
     next: NextFunction
 ) => {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies.token;
 
-    if (!authHeader) {
-        res.status(401).json("No Bearer Token");
+    if (!token) {
+        res.status(401).json("Authentication required");
         return;
     }
-
-    const token = authHeader.split(" ")[1];
 
     try {
         const decoded = jwt.verify(token, environment.jwtSecret) as { id: string };

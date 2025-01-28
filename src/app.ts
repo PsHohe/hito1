@@ -4,8 +4,11 @@ import studentRoute from './routes/student.route';
 import swaggerUi from "swagger-ui-express";
 import openapiSpecification from "./config/swagger";
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 const app = express();
+
+app.use(cookieParser())
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiSpecification));
 
