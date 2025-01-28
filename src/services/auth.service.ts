@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import userService from "./user.service";
+import { environment } from "@/config/environment";
 
 const loginWithEmailAndPassword = async (email: string, password: string) => {
     const user = await userService.getUserByEmail(email);
@@ -13,7 +14,7 @@ const loginWithEmailAndPassword = async (email: string, password: string) => {
         throw new Error("Invalid password");
     }
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, environment.jwtSecret, { expiresIn: '1h' });
     return token;
 };
 
