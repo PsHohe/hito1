@@ -10,12 +10,12 @@ const login = async (req: Request, res: Response) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: process.env.NODE_ENV === "production" ? true : false,
             sameSite: "strict",
             maxAge: 1 * 1 * 60 * 60 * 1000, // 1 hora
         });
 
-        res.json({ message: "You're now authenticated!"})
+        res.json({ message: "You're now authenticated!" })
     } catch (error) {
         console.log(error);
         if (error instanceof Error) {
