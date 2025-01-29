@@ -29,7 +29,7 @@ vi.mock("../src/database/models/student.model", () => ({
 }));
 
 vi.mock('../src/middlewares/jwt.middleware', () => ({
-    verifyToken: vi.fn((req, res, next) => next())
+    verifyToken: vi.fn((req, res, next) => next()),
 }));
 
 // Now we can import the rest
@@ -62,7 +62,7 @@ describe('Student Routes', () => {
 
     it('should return all students', async () => {
         vi.mocked(Student.findAll).mockResolvedValueOnce([mockStudent1, mockStudent2]);
-        
+
         const response = await request(app).get('/api/v1/students');
         expect(response.status).toBe(200);
         expect(response.body).toEqual(expect.arrayContaining([
@@ -75,7 +75,7 @@ describe('Student Routes', () => {
 
     it('should return a student by id', async () => {
         vi.mocked(Student.findByPk).mockResolvedValueOnce(mockStudent2);
-        
+
         const response = await request(app).get(`/api/v1/students/${mockStudent2.id}`);
         expect(response.status).toBe(200);
         expect(response.body).toEqual(expect.objectContaining({
@@ -149,7 +149,7 @@ describe('Student Routes', () => {
 
     it('should return 404 if student not found', async () => {
         vi.mocked(Student.findByPk).mockResolvedValueOnce(null);
-        
+
         const response = await request(app).get('/api/v1/students/123e4567-e89b-4bda-8276-426614174002');
         expect(response.status).toBe(404);
     });

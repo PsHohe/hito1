@@ -1,11 +1,9 @@
-import dotenv from 'dotenv';
 import app from './app';
 import { initDatabase } from './config/database';
 import { runSeeders } from './database/seeders/runSeeders';
+import { environment } from './config/environment';
 
-dotenv.config();
-
-const port = process.env.PORT || 3000;
+const port = environment.port;
 
 const startServer = async () => {
     try {

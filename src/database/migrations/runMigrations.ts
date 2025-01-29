@@ -21,7 +21,7 @@ async function runMigrations() {
         console.error('Error running migrations:', error);
         throw error;
     } finally {
-        await pool.end();
+        await pool.close()
     }
 }
 

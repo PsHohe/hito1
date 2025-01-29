@@ -56,7 +56,7 @@ El servidor se ejecutará en `http://localhost:3000`.
     }
     ```
 
-* Mediante esta ruta se obtiene el token que será requerido en las rutas protegidas.
+* Mediante esta ruta se obtiene la cookie con el token que será requerido en las rutas protegidas.
 
 - **POST** `/api/v1/auth/register`
   - Descripción: Registra un nuevo usuario.
@@ -68,16 +68,29 @@ El servidor se ejecutará en `http://localhost:3000`.
     }
     ```
 
+- **POST** `/api/v1/auth/logout`
+  - Descripción: Cierra la sesión.
+  - No se requiere de un cuerpo.
+
+- **GET** `/api/v1/auth/me`
+  - Descripción: Obtiene el propio usuario. **(Protegido, requiere cookie con el token)**
+  - Se debería obtener una respuesta similar a esta:
+    ```json
+    {
+      "email": "user@email.com",
+    }
+    ```
+
 ### Estudiantes
 
 - **GET** `/api/v1/students`
-  - Descripción: Obtiene la lista de estudiantes. **(Protegido, requiere token Bearer)**
+  - Descripción: Obtiene la lista de estudiantes. **(Protegido, requiere cookie con el token)**
 
 - **GET** `/api/v1/students/:id`
-  - Descripción: Obtiene un estudiante por su ID. **(Protegido, requiere token Bearer)**
+  - Descripción: Obtiene un estudiante por su ID. **(Protegido, requiere cookie con el token)**
 
 - **POST** `/api/v1/students`
-  - Descripción: Crea un nuevo estudiante. **(Protegido, requiere token Bearer)**
+  - Descripción: Crea un nuevo estudiante. **(Protegido, requiere cookie con el token)**
   - Cuerpo de la solicitud:
     ```json
     {
@@ -89,7 +102,7 @@ El servidor se ejecutará en `http://localhost:3000`.
     }
     ```
 - **PUT** `/api/v1/students/:id`
-  - Descripción: Actualiza un estudiante existente. **(Protegido)**
+  - Descripción: Actualiza un estudiante existente. **(Protegido, requiere cookie con el token)**
   - Cuerpo de la solicitud:
     ```json
     {
@@ -102,14 +115,12 @@ El servidor se ejecutará en `http://localhost:3000`.
     ```
 
 - **DELETE** `/api/v1/students/:id`
-  - Descripción: Elimina un estudiante. **(Protegido)**
+  - Descripción: Elimina un estudiante. **(Protegido, requiere cookie con el token)**
 
 
 ## Autenticación
 
-Para acceder a los endpoints protegidos, debes incluir un token Bearer en el encabezado de autorización de la siguiente manera:
-
-Authorization: Bearer <tu_token>
+Para acceder a los endpoints protegidos, tus solicitudes deben tener la cookie de autenticación creada con el endpoint `/api/v1/auth/login` antes descrito.
 
 ## Scripts Disponibles
 

@@ -1,14 +1,14 @@
-import dotenv from 'dotenv';
 import express, { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { Column, DataType, Table, Model, Sequelize } from 'sequelize-typescript';
 import bcrypt from 'bcryptjs';
+import 'dotenv/config';
 import { differenceInYears } from 'date-fns';
 import { body, validationResult, param } from 'express-validator';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import rateLimit from 'express-rate-limit';
-import 'dotenv/config';
+import cookieParser from 'cookie-parser';
 import { faker } from '@faker-js/faker';
 
 var __defProp$1 = Object.defineProperty;
@@ -111,6 +111,22 @@ var userService = {
   createUserWithEmailAndPassword
 };
 
+const environment = {
+  port: process.env.PORT || 3e3,
+  nodeEnv: process.env.NODE_ENV || "development",
+  databaseUrl: process.env.DATABASE_URL || "",
+  jwtSecret: process.env.JWT_SECRET || ""
+};
+if (!environment.databaseUrl || environment.databaseUrl === "") {
+  throw new Error("DATABASE_URL is not set");
+}
+if (!environment.jwtSecret || environment.jwtSecret === "") {
+  throw new Error("JWT_SECRET is not set");
+}
+if (environment.jwtSecret.length < 10) {
+  throw new Error("JWT_SECRET is too short");
+}
+
 const loginWithEmailAndPassword = async (email, password) => {
   const user = await userService.getUserByEmail(email);
   if (!user) {
@@ -120,7 +136,7 @@ const loginWithEmailAndPassword = async (email, password) => {
   if (!isPasswordValid) {
     throw new Error("Invalid password");
   }
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || "secret", { expiresIn: "1h" });
+  const token = jwt.sign({ id: user.id }, environment.jwtSecret, { expiresIn: "1h" });
   return token;
 };
 const registerWithEmailAndPassword = async (email, password) => {
@@ -136,7 +152,14 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const token = await authService.loginWithEmailAndPassword(email, password);
-    res.json({ token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1 * 1 * 60 * 60 * 1e3
+      // 1 hora
+    });
+    res.json({ message: "You're now authenticated!" });
   } catch (error) {
     console.log(error);
     if (error instanceof Error) {
@@ -156,30 +179,67 @@ const register = async (req, res) => {
     } else res.status(500).json({ error: "Server error" });
   }
 };
+const logout = async (_, res) => {
+  try {
+    res.clearCookie("token");
+    res.json({ message: "You've been correctly logged out!" });
+  } catch (error) {
+    console.log(error);
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+};
+const me = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ email: user.email });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+};
 var authController = {
   login,
-  register
+  register,
+  logout,
+  me
 };
 
-const router$1 = Router();
-router$1.post("/login", authController.login);
-router$1.post("/register", authController.register);
-
 const verifyToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    res.status(401).json("No Bearer Token");
+  const token = req.cookies.token;
+  if (!token) {
+    res.status(401).json("Authentication required");
     return;
   }
-  const token = authHeader.split(" ")[1];
   try {
-    jwt.verify(token, process.env.JWT_SECRET || "secret");
+    const decoded = jwt.verify(token, environment.jwtSecret);
+    req.userId = decoded.id;
     next();
   } catch (error) {
     console.log(error);
     res.status(401).json({ error: "Unauthorized" });
   }
 };
+
+const router$1 = Router();
+router$1.post("/login", authController.login);
+router$1.post("/register", authController.register);
+router$1.post("/logout", authController.logout);
+router$1.get("/me", verifyToken, authController.me);
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -468,6 +528,7 @@ const options = {
 const openapiSpecification = swaggerJsdoc(options);
 
 const app = express();
+app.use(cookieParser());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiSpecification));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -486,10 +547,10 @@ app.use(limiter);
 app.use("/api/v1/auth", router$1);
 app.use("/api/v1/students", router);
 
-const sequelize = new Sequelize(process.env.DATABASE_URL || "", {
+const sequelize = new Sequelize(environment.databaseUrl, {
   dialect: "postgres",
   dialectOptions: {
-    ssl: process.env.NODE_ENV === "production" ? {
+    ssl: environment.nodeEnv === "production" ? {
       require: true,
       rejectUnauthorized: false
     } : false
@@ -581,8 +642,7 @@ async function runSeeders() {
   }
 }
 
-dotenv.config();
-const port = process.env.PORT || 3e3;
+const port = environment.port;
 const startServer = async () => {
   try {
     console.log(`
@@ -590,12 +650,7 @@ const startServer = async () => {
 Initial Setup
 **************************************************`);
     await initDatabase();
-    console.log("Database initialized successfully");
-    try {
-      await runSeeders();
-    } catch (error) {
-      console.error("Failed to run seeders:", error);
-    }
+    await runSeeders();
     app.listen(port, () => {
       console.log(`
 **************************************************
