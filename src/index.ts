@@ -1,7 +1,9 @@
 import app from './app';
+import { createServer } from 'http';
 import { initDatabase } from './config/database';
 import { runSeeders } from './database/seeders/runSeeders';
 import { environment } from './config/environment';
+import { initializeSocket } from './config/socket';
 
 const port = environment.port;
 
@@ -15,10 +17,14 @@ Initial Setup
         await initDatabase();
         await runSeeders();
 
-        app.listen(port, () => {
+        const httpServer = createServer(app);
+        const io = initializeSocket(httpServer);
+
+        httpServer.listen(port, () => {
             console.log(`
 **************************************************
 Server is running on port ${port}
+Socket.IO server initialized
 **************************************************`);
         });
     } catch (error) {
