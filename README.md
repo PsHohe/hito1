@@ -1,5 +1,31 @@
 # Proyecto Hitos Desafío latam
-## Hito 3
+## Hito 6
+
+En este hito, se ha implementado un sistema de chat en tiempo real utilizando Socket.io. A continuación se detallan las características principales:
+
+### Características del Chat
+
+- **Comunicación en tiempo real**: Implementación de Socket.io para permitir mensajería instantánea entre usuarios.
+- **Autenticación integrada**: El sistema de chat utiliza el mismo sistema de autenticación JWT que la API REST.
+- **Salas de chat**: Los usuarios pueden unirse a diferentes salas para mantener conversaciones separadas.
+- **Interfaz de usuario**: Se ha creado una interfaz web simple en HTML.
+
+### Cómo usar el chat
+
+1. Accede a la aplicación en `http://localhost:3000`
+2. Inicia sesión con tus credenciales (Usuario por defecto: user@email.com contraseña: password)
+3. Una vez autenticado, podrás unirte a salas de chat y enviar mensajes
+4. Los mensajes se muestran en tiempo real para todos los usuarios conectados a la misma sala
+
+### Implementación técnica
+
+- El servidor Socket.io se inicializa junto con el servidor HTTP en `src/index.ts`
+- La configuración y lógica del socket se encuentra en `src/config/socket.ts`
+- La interfaz de usuario y la lógica del cliente están en `src/public/index.html` y `src/public/chat.js`
+- Se utiliza el middleware de autenticación para verificar los tokens JWT en las conexiones de socket
+
+
+## Hitos previos y app en general
 
 Este proyecto es parte de los "Hitos" de DesafíoLatam. Esn este caso es una API construida con Node.js y Express. A continuación se detallan los pasos para ejecutar el proyecto y los endpoints disponibles.
 
